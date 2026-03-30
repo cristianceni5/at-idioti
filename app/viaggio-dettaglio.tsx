@@ -3,16 +3,15 @@ import { useRouter } from "expo-router";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import {
-  ACTIVATION_DATE_LABEL,
-  EXPIRY_DATE_LABEL,
-  LAST_UPDATE_LABEL,
-} from "@/state/ticket-flow-context";
+import { useTicketFlow } from "@/state/ticket-flow-context";
+import { getTicketDateLabels } from "@/ui/ticket-date-labels";
 import { HEADER_TOKENS } from "@/ui/tokens";
 
 export default function ViaggioDettaglioScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { state } = useTicketFlow();
+  const labels = getTicketDateLabels(new Date(), state.activationStartedAt);
 
   return (
     <View
@@ -28,18 +27,20 @@ export default function ViaggioDettaglioScreen() {
         <Ionicons name="close" size={56 / 1.9} color="#000" />
       </Pressable>
 
-      <View style={styles.middleSpacer} />
+      <View style={styles.qrCard}>
+        <Ionicons name="qr-code-outline" size={210} color="#0f1116" />
+      </View>
 
-      <Text style={styles.lastUpdate}>Ultimo aggiornamento a {LAST_UPDATE_LABEL}</Text>
+      <Text style={styles.lastUpdate}>Ultimo aggiornamento a {labels.lastUpdateLabel}</Text>
       <View style={styles.divider} />
 
       <Text style={styles.ticketName}>URBANO CAPOLUOGO A TEMPO</Text>
 
       <Text style={styles.blockLabel}>DATA DI CONVALIDA</Text>
-      <Text style={styles.blockValue}>{ACTIVATION_DATE_LABEL}</Text>
+      <Text style={styles.blockValue}>{labels.activationDateLabel}</Text>
 
       <Text style={styles.blockLabel}>FINE VALIDITÀ</Text>
-      <Text style={styles.blockValue}>{EXPIRY_DATE_LABEL}</Text>
+      <Text style={styles.blockValue}>{labels.expiryDateLabel}</Text>
     </View>
   );
 }
@@ -50,14 +51,23 @@ const styles = StyleSheet.create({
     backgroundColor: "#f4f4f6",
   },
   closeButton: {
-    width: 44,
-    height: 44,
+    width: 50,
+    height: 50,
     alignItems: "center",
     justifyContent: "center",
-    marginLeft: -4,
+    marginLeft: -2,
+    marginBottom: 1,
+    marginTop: -20,
   },
-  middleSpacer: {
+  qrCard: {
+    alignSelf: "center",
+    width: "100%",
+    maxWidth: 340,
     height: 300,
+    marginBottom: 18,
+    borderRadius: 16,
+    alignItems: "center",
+    justifyContent: "center",
   },
   lastUpdate: {
     textAlign: "center",
@@ -79,7 +89,7 @@ const styles = StyleSheet.create({
   },
   blockLabel: {
     marginTop: 16,
-    fontSize: 16,
+    fontSize: 12,
     fontWeight: "700",
     color: "#8a8d95",
   },

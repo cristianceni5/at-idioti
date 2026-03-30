@@ -17,6 +17,7 @@ type TicketFlowInternalState = {
   activationSheetOpen: boolean;
   selectedCity: TicketCity;
   remainingSeconds: number;
+  activationStartedAt: number | null;
 };
 
 export interface TicketFlowState {
@@ -24,6 +25,7 @@ export interface TicketFlowState {
   activationSheetOpen: boolean;
   selectedCity: TicketCity;
   remainingSeconds: number;
+  activationStartedAt: number | null;
   hasHomeDot: boolean;
 }
 
@@ -33,40 +35,32 @@ export interface TicketFlowActions {
   setCity: (city: TicketCity) => void;
   activateTicket: () => void;
   tickCountdown: () => void;
-  resetTimerOnAppLaunchIfInUse: () => void;
 }
 
-export const MIN_REMAINING_SECONDS = 600;
-export const MAX_REMAINING_SECONDS = 5400;
-export const INITIAL_REMAINING_SECONDS = 5396;
-export const LAST_UPDATE_LABEL = "14:20";
-export const ACTIVATION_DATE_LABEL = "24/02/2026 alle 02:20";
-export const EXPIRY_DATE_LABEL = "24/02/2026 alle 03:50";
-export const HISTORY_DAY_LABEL = "Oggi - Martedì 24 febbraio";
-export const HISTORY_TIME_LABEL = "14:20";
+export const TOTAL_VALIDITY_SECONDS = 5400;
+export const INITIAL_REMAINING_SECONDS = TOTAL_VALIDITY_SECONDS - 300;
 
 const STATUS_STORAGE_KEY = "ticket_flow_status";
 const CITY_STORAGE_KEY = "ticket_flow_city";
 
-function getScriptedRemainingSeconds() {
-  const span = MAX_REMAINING_SECONDS - MIN_REMAINING_SECONDS;
-  return MIN_REMAINING_SECONDS + Math.floor(Math.random() * (span + 1));
-}
-
 type TicketFlowAction =
-  | { type: "HYDRATE"; status: TicketStatus; selectedCity: TicketCity }
+  | {
+      type: "HYDRATE";
+      status: TicketStatus;
+      selectedCity: TicketCity;
+    }
   | { type: "OPEN_SHEET" }
   | { type: "CLOSE_SHEET" }
   | { type: "SET_CITY"; city: TicketCity }
   | { type: "ACTIVATE_TICKET" }
-  | { type: "TICK_COUNTDOWN" }
-  | { type: "RESET_TIMER_IF_IN_USE" };
+  | { type: "TICK_COUNTDOWN" };
 
 const initialState: TicketFlowInternalState = {
   status: "idle",
   activationSheetOpen: false,
   selectedCity: "firenze",
   remainingSeconds: INITIAL_REMAINING_SECONDS,
+  activationStartedAt: null,
 };
 
 function reducer(
@@ -80,8 +74,8 @@ function reducer(
         status: action.status,
         selectedCity: action.selectedCity,
         activationSheetOpen: false,
-        remainingSeconds:
-          action.status === "in_use" ? INITIAL_REMAINING_SECONDS : state.remainingSeconds,
+        activationStartedAt: action.status === "in_use" ? Date.now() : null,
+        remainingSeconds: action.status === "in_use" ? INITIAL_REMAINING_SECONDS : state.remainingSeconds,
       };
     case "OPEN_SHEET":
       return { ...state, activationSheetOpen: true };
@@ -94,6 +88,7 @@ function reducer(
         ...state,
         status: "in_use",
         activationSheetOpen: false,
+        activationStartedAt: Date.now(),
         remainingSeconds: INITIAL_REMAINING_SECONDS,
       };
     case "TICK_COUNTDOWN":
@@ -101,11 +96,6 @@ function reducer(
         ...state,
         remainingSeconds: Math.max(0, state.remainingSeconds - 1),
       };
-    case "RESET_TIMER_IF_IN_USE":
-      if (state.status !== "in_use") {
-        return state;
-      }
-      return { ...state, remainingSeconds: getScriptedRemainingSeconds() };
     default:
       return state;
   }
@@ -135,10 +125,7 @@ export function TicketFlowProvider({ children }: { children: ReactNode }) {
 
     async function hydrateState() {
       try {
-        const entries = await AsyncStorage.multiGet([
-          STATUS_STORAGE_KEY,
-          CITY_STORAGE_KEY,
-        ]);
+        const entries = await AsyncStorage.multiGet([STATUS_STORAGE_KEY, CITY_STORAGE_KEY]);
         const status = parseStoredStatus(entries[0]?.[1] ?? null);
         const selectedCity = parseStoredCity(entries[1]?.[1] ?? null);
 
@@ -192,15 +179,6 @@ export function TicketFlowProvider({ children }: { children: ReactNode }) {
     dispatch({ type: "TICK_COUNTDOWN" });
   }, []);
 
-  const resetTimerOnAppLaunchIfInUse = useCallback(() => {
-    dispatch({ type: "RESET_TIMER_IF_IN_USE" });
-  }, []);
-
-  useEffect(() => {
-    if (!hydrated) return;
-    resetTimerOnAppLaunchIfInUse();
-  }, [hydrated, resetTimerOnAppLaunchIfInUse]);
-
   const value = useMemo<TicketFlowContextValue>(
     () => ({
       state: {
@@ -213,14 +191,12 @@ export function TicketFlowProvider({ children }: { children: ReactNode }) {
         setCity,
         activateTicket,
         tickCountdown,
-        resetTimerOnAppLaunchIfInUse,
       },
     }),
     [
       activateTicket,
       closeActivationSheet,
       openActivationSheet,
-      resetTimerOnAppLaunchIfInUse,
       setCity,
       state,
       tickCountdown,

@@ -1,8 +1,8 @@
-import { Tabs } from "expo-router";
+import { HEADER_TOKENS, PALETTE, getHeaderHeight } from "@/ui/tokens";
 import { Ionicons } from "@expo/vector-icons";
+import { Tabs } from "expo-router";
 import { StyleSheet } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { HEADER_TOKENS, PALETTE, getHeaderHeight } from "@/ui/tokens";
 
 export default function TabsLayout() {
   const insets = useSafeAreaInsets();
@@ -59,8 +59,12 @@ export default function TabsLayout() {
         options={{
           title: "Home",
           headerShown: false,
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="home-outline" color={color} size={size} />
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons
+              name={focused ? "home" : "home-outline"}
+              color={color}
+              size={size}
+            />
           ),
         }}
       />
@@ -68,8 +72,12 @@ export default function TabsLayout() {
         name="orari"
         options={{
           title: "Orari",
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="time-outline" color={color} size={size} />
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons
+              name={focused ? "time" : "time-outline"}
+              color={color}
+              size={size}
+            />
           ),
         }}
       />
@@ -98,9 +106,9 @@ export default function TabsLayout() {
         name="avvisi"
         options={{
           title: "Avvisi",
-          tabBarIcon: ({ color, size }) => (
+          tabBarIcon: ({ color, size, focused }) => (
             <Ionicons
-              name="notifications-outline"
+              name={focused ? "notifications" : "notifications-outline"}
               color={color}
               size={size}
             />

@@ -7,7 +7,6 @@
     "icon": "./ui/logo-at-sega.png",
     "scheme": "atidioti",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
       "icon": "./ui/logo-at-sega.png"
@@ -18,7 +17,6 @@
         "foregroundImage": "./ui/logo-at-sega.png",
         "monochromeImage": "./ui/icon-at-dark.png"
       },
-      "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false
     },
     "web": {

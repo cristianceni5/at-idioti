@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from "expo-router";
 import { Image, Modal, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 
@@ -44,28 +45,34 @@ export default function AcquiestaScreen() {
           <Text style={styles.sectionLabel}>SUL MIO TELEFONO</Text>
 
           <Pressable style={styles.ticketCard} onPress={onTicketCardPress}>
-            <View style={styles.ticketGradient} />
-            <View style={styles.brandRow}>
-              <Image source={require("../../ui/logo-at-white.png")} style={styles.brandIcon} />
-              <Text style={styles.brand}>at-bus.it</Text>
-            </View>
-            <View style={styles.ticketTitleRow}>
-              <Text style={styles.ticketTitle}>Biglietto</Text>
-              <Text style={styles.ticketTitleEn}>Ticket</Text>
-            </View>
-            <Text style={styles.ticketSub}>Urbano capoluogo</Text>
-            <View style={styles.activateBadge}>
-              <Text style={styles.activateText}>Clicca per attivare / Tap to activate</Text>
-            </View>
-
-            {isInUse ? (
-              <View style={styles.ticketOverlay}>
-                <View style={styles.lockCircle}>
-                  <Ionicons name="lock-closed" size={22} color="#0f141a" />
-                </View>
-                <Text style={styles.ticketOverlayText}>Titoli in uso</Text>
+            <LinearGradient style={styles.ticketGradient}
+              // Inverti l'ordine dei colori o usa start/end per il "to left"
+              colors={['#79c3b6', '#489784']}
+              start={{ x: 1, y: 0.5 }} // Parte da destra
+              end={{ x: 0, y: 0.5 }}   // Arriva a sinistra
+            >
+              <View style={styles.brandRow}>
+                <Image source={require("../../ui/logo-at-white.png")} style={styles.brandIcon} />
+                <Text style={styles.brand}>at-bus.it</Text>
               </View>
-            ) : null}
+              <View style={styles.ticketTitleRow}>
+                <Text style={styles.ticketTitle}>Biglietto</Text>
+                <Text style={styles.ticketTitleEn}>Ticket</Text>
+              </View>
+              <Text style={styles.ticketSub}>Urbano capoluogo</Text>
+              <View style={styles.activateBadge}>
+                <Text style={styles.activateText}>Clicca per attivare / Tap to activate</Text>
+              </View>
+
+              {isInUse ? (
+                <View style={styles.ticketOverlay}>
+                  <View style={styles.lockCircle}>
+                    <Ionicons name="lock-closed" size={22} color="#0f141a" />
+                  </View>
+                  <Text style={styles.ticketOverlayText}>Titoli in uso</Text>
+                </View>
+              ) : null}
+            </LinearGradient>
           </Pressable>
 
           <Text style={styles.available}>URBANO CAPOLUOGO A TEMPO</Text>
@@ -179,17 +186,13 @@ const styles = StyleSheet.create({
     marginLeft: 18,
   },
   ticketCard: {
-    marginTop: 40,
+    marginTop: 45,
     alignSelf: "center",
     height: 180,
     width: 300,
     borderRadius: 16,
     borderWidth: 4,
     borderColor: "#fff",
-    backgroundColor: "#2ab0a0",
-    paddingHorizontal: 13,
-    paddingTop: 12,
-    paddingBottom: 12,
     overflow: "hidden",
     shadowColor: "#000",
     shadowOpacity: 0.20,
@@ -198,23 +201,22 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   ticketGradient: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: "#2db09e",
-    opacity: 0.62,
+    width: "100%",
+    height: "100%",
+    paddingHorizontal: 13,
+    paddingTop: 8,
+    paddingBottom: 12,
+    overflow: "hidden",
   },
   brandRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
-    marginBottom: 8,
+    marginBottom: 1,
   },
   brandIcon: {
-    width: 30,
-    height: 30,
+    width: 50,
+    height: 50,
     resizeMode: "contain",
   },
   brand: {
@@ -225,15 +227,16 @@ const styles = StyleSheet.create({
   ticketTitleRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
+    gap: 15,
   },
   ticketTitle: {
-    fontSize: 16,
+    fontSize: 27.5,
     color: "#f5fffe",
     fontWeight: "700",
   },
   ticketTitleEn: {
-    fontSize: 16,
+    marginTop: 5,
+    fontSize: 20,
     color: "#f5fffe",
     fontStyle: "italic",
   },

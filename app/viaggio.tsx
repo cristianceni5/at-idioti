@@ -1,14 +1,12 @@
+import { useFonts } from "expo-font";
 import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import { useState } from "react";
-import { Image, Modal, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import {
-  HISTORY_DAY_LABEL,
-  HISTORY_TIME_LABEL,
-  useTicketFlow,
-} from "@/state/ticket-flow-context";
+import { useTicketFlow } from "@/state/ticket-flow-context";
+import { getTicketDateLabels } from "@/ui/ticket-date-labels";
 import { HEADER_TOKENS, PALETTE, getHeaderHeight } from "@/ui/tokens";
 
 function formatRemaining(seconds: number) {
@@ -20,12 +18,25 @@ function formatRemaining(seconds: number) {
   ).padStart(2, "0")}`;
 }
 
+function formatValidationTime24(activationStartedAt: number | null) {
+  const base = activationStartedAt
+    ? new Date(activationStartedAt - 5 * 60 * 1000)
+    : new Date(Date.now() - 5 * 60 * 1000);
+  const hour = String(base.getHours()).padStart(2, "0");
+  const minute = String(base.getMinutes()).padStart(2, "0");
+  return `${hour}:${minute}`;
+}
+
 export default function ViaggioScreen() {
   const router = useRouter();
   const { state } = useTicketFlow();
-  const [qrOpen, setQrOpen] = useState(false);
+  const [fontsLoaded] = useFonts({
+    Parisine: require("../ui/Parisine Regular.otf"),
+  });
   const insets = useSafeAreaInsets();
   const headerHeight = getHeaderHeight(insets.top);
+  const labels = getTicketDateLabels(new Date(), state.activationStartedAt);
+  const validationTime24 = formatValidationTime24(state.activationStartedAt);
 
   return (
     <View style={styles.container}>
@@ -48,76 +59,58 @@ export default function ViaggioScreen() {
         <View style={styles.headerSpacer} />
       </View>
 
-      <ScrollView
-        style={styles.scroll}
-        contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}
-      >
-        <View style={styles.inUseRow}>
-          <Text style={styles.inUseText}>In uso</Text>
-          <Ionicons name="hourglass-outline" size={28} color="#7789a8" />
-        </View>
-
-        <Pressable style={styles.ticketCard} onPress={() => router.push("/viaggio-dettaglio")}>
-          <View style={styles.ticketTop}>
-            <View style={styles.brandRow}>
-              <Image source={require("../ui/logo-at-white.png")} style={styles.brandIcon} />
-              <Text style={styles.brand}>at-bus.it</Text>
-            </View>
-            <View style={styles.ticketTitleRow}>
-              <Text style={styles.ticketTitle}>Biglietto</Text>
-              <Text style={styles.ticketTitleEn}>Ticket</Text>
-            </View>
-            <Text style={styles.ticketSub}>Urbano capoluogo</Text>
-          </View>
-
-          <View style={styles.ticketBottom}>
-            <Text style={styles.ticketBottomLabel}>Fine della validità:</Text>
-            <Text style={styles.ticketBottomTime}>{formatRemaining(state.remainingSeconds)}</Text>
-          </View>
-        </Pressable>
-
-        <View style={styles.historyWrap}>
-          <Text style={styles.historyTitle}>Storico biglietti</Text>
-          <View style={styles.dayPill}>
-            <Text style={styles.dayPillText}>{HISTORY_DAY_LABEL}</Text>
-          </View>
-
-          <View style={styles.historyRow}>
-            <View>
-              <Text style={styles.historySmall}>1 convalida</Text>
-              <Text style={styles.historyMain}>URBANO CAPOLUOGO A TEMPO</Text>
-            </View>
-            <Text style={styles.historyTime}>{HISTORY_TIME_LABEL}</Text>
-          </View>
-        </View>
-      </ScrollView>
-
-      <View style={[styles.qrWrap, { paddingBottom: Math.max(insets.bottom, 12) }]}>
-        <Pressable style={styles.qrButton} onPress={() => setQrOpen(true)}>
-          <Text style={styles.qrText}>Visualizza il QR code</Text>
-        </Pressable>
+      <View style={styles.inUseRow}>
+        <Text style={styles.inUseText}>In uso</Text>
+        <Ionicons name="hourglass-outline" size={28} color="#7789a8" />
       </View>
 
-      <Modal
-        visible={qrOpen}
-        animationType="slide"
-        presentationStyle="fullScreen"
-        onRequestClose={() => setQrOpen(false)}
-      >
-        <View style={styles.qrModalRoot}>
-          <View style={styles.qrModalHeader}>
-            <Text style={styles.qrModalTitle}>QR code</Text>
-            <Pressable onPress={() => setQrOpen(false)}>
-              <Ionicons name="close" size={30} color="#0f1116" />
-            </Pressable>
+      <Pressable style={styles.ticketCard} onPress={() => router.push("/viaggio-dettaglio")}>
+        <LinearGradient
+          style={styles.ticketTop}
+          colors={["#79c3b6", "#489583"]}
+          start={{ x: 0, y: 0.5 }}
+          end={{ x: 1, y: 0.5 }}
+        >
+          <View style={styles.brandRow}>
+            <Image source={require("../ui/logo-at-white.png")} style={styles.brandIcon} />
+            <Text style={styles.brand}>at-bus.it</Text>
           </View>
-          <View style={styles.qrCard}>
-            <Ionicons name="qr-code-outline" size={220} color="#0f1116" />
+          <View style={styles.ticketTitleRow}>
+            <Text style={[styles.ticketTitle, fontsLoaded && styles.ticketTitleParisine]}>
+              Biglietto
+            </Text>
+            <Text style={styles.ticketTitleEn}>Ticket</Text>
           </View>
-          <Text style={styles.qrCaption}>Mostra questo codice al controllo.</Text>
+          <Text style={styles.ticketSub}>Urbano capoluogo</Text>
+        </LinearGradient>
+
+        <View style={styles.ticketBottom}>
+          <Text style={styles.ticketBottomLabel}>Fine della validità:</Text>
+          <Text style={styles.ticketBottomTime}>{formatRemaining(state.remainingSeconds)}</Text>
         </View>
-      </Modal>
+      </Pressable>
+
+      <View style={styles.historyWrap}>
+        <View style={styles.historyPointer} />
+        <Text style={styles.historyTitle}>Storico biglietti</Text>
+        <View style={styles.dayPill}>
+          <Text style={styles.dayPillText}>{labels.historyDayLabel}</Text>
+        </View>
+
+        <View style={styles.historyRow}>
+          <View>
+            <Text style={styles.historySmall}>1 convalida</Text>
+            <Text style={styles.historyMain}>URBANO CAPOLUOGO A TEMPO</Text>
+          </View>
+          <Text style={styles.historyTime}>{validationTime24}</Text>
+        </View>
+
+        <View style={[styles.qrWrap, { paddingBottom: Math.max(insets.bottom, 12) }]}>
+          <Pressable style={styles.qrButton} onPress={() => router.push("/viaggio-dettaglio")}>
+            <Text style={styles.qrText}>Visualizza il QR code</Text>
+          </Pressable>
+        </View>
+      </View>
     </View>
   );
 }
@@ -176,7 +169,7 @@ const styles = StyleSheet.create({
   },
   ticketCard: {
     alignSelf: "center",
-    width: 300,
+    width: 280,
     backgroundColor: "#ffffff",
     marginTop: 12,
     marginHorizontal: 18,
@@ -185,25 +178,24 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: "#fff",
     shadowColor: "#000",
-    shadowOpacity: 0.15,
-    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.35,
+    shadowOffset: { width: 0, height: 5 },
     shadowRadius: 8,
     elevation: 4,
   },
   ticketTop: {
-    backgroundColor: "#33b2a3",
-    paddingHorizontal: 12,
-    paddingVertical: 12,
+    paddingHorizontal: 20,
+    paddingVertical: 8,
   },
   brandRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
-    marginBottom: 8,
+    marginBottom: 0,
   },
   brandIcon: {
-    width: 30,
-    height: 30,
+    width: 45,
+    height: 45,
     resizeMode: "contain",
   },
   brand: {
@@ -217,11 +209,16 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   ticketTitle: {
-    fontSize: 16,
+    fontSize: 20,
     color: "#f4fffe",
-    fontWeight: "700",
+    fontWeight: "800",
+  },
+  ticketTitleParisine: {
+    fontFamily: "Parisine",
+    fontWeight: "900",
   },
   ticketTitleEn: {
+    marginTop: 3,
     fontSize: 16,
     color: "#f4fffe",
     fontStyle: "italic",
@@ -230,10 +227,11 @@ const styles = StyleSheet.create({
     marginTop: 3,
     color: "#eafffc",
     fontSize: 12,
+    marginBottom: 6,
   },
   ticketBottom: {
     backgroundColor: "#000",
-    paddingVertical: 8,
+    paddingVertical: 5,
     alignItems: "center",
   },
   ticketBottomLabel: {
@@ -247,10 +245,25 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
   historyWrap: {
-    marginTop: 20,
-    borderTopWidth: 1,
-    borderTopColor: "#cfd3d8",
+    marginTop: 35,
+    backgroundColor: "#ffffff",
     paddingTop: 18,
+    position: "relative",
+    height: '100%',
+  },
+  historyPointer: {
+    position: "absolute",
+    top: -10,
+    left: "50%",
+    marginLeft: -12,
+    width: 0,
+    height: 0,
+    borderLeftWidth: 12,
+    borderRightWidth: 12,
+    borderBottomWidth: 12,
+    borderLeftColor: "transparent",
+    borderRightColor: "transparent",
+    borderBottomColor: "#ffffff",
   },
   historyTitle: {
     fontSize: 20,
@@ -262,7 +275,7 @@ const styles = StyleSheet.create({
   dayPill: {
     alignSelf: "flex-start",
     marginLeft: 18,
-    borderRadius: 8,
+    borderRadius: 4,
     backgroundColor: "#d3d4d8",
     paddingHorizontal: 10,
     paddingVertical: 3,
@@ -276,6 +289,7 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderBottomWidth: 1,
     borderColor: "#d8dade",
+    borderStyle: "dashed",
     paddingHorizontal: 18,
     paddingVertical: 8,
     flexDirection: "row",
@@ -298,11 +312,13 @@ const styles = StyleSheet.create({
     color: "#272a2f",
   },
   qrWrap: {
+    backgroundColor: "#fff",
     paddingHorizontal: 18,
-    paddingTop: 6,
+    paddingTop: 250,
+    paddingBottom: 20
   },
   qrButton: {
-    height: 62,
+    height: 45,
     borderRadius: 14,
     backgroundColor: PALETTE.BLU_PRINCIPALE,
     alignItems: "center",
@@ -312,37 +328,5 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 18,
     fontWeight: "700",
-  },
-  qrModalRoot: {
-    flex: 1,
-    backgroundColor: "#f4f5f7",
-    paddingTop: 56,
-    paddingHorizontal: 20,
-  },
-  qrModalHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-  qrModalTitle: {
-    fontSize: 22,
-    fontWeight: "700",
-    color: "#0f1116",
-  },
-  qrCard: {
-    marginTop: 34,
-    borderRadius: 16,
-    backgroundColor: "#ffffff",
-    borderWidth: 1,
-    borderColor: "#d9dce2",
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: 28,
-  },
-  qrCaption: {
-    marginTop: 16,
-    fontSize: 14,
-    color: "#515662",
-    textAlign: "center",
   },
 });
